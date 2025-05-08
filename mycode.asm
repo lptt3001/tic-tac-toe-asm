@@ -1,71 +1,78 @@
 name "Tic Tac Toe"
-org 100h               ; dia chi bat dau cua COM file la 0100h
+org 100h               ; dia chi bat dau cua COM file
 
 .DATA
 
-    ; khai bao ban co 3x3 voi cac so tu 1 den 9 (dung de nhap vi tri)
     grid db '1','2','3'  
          db '4','5','6'
          db '7','8','9'
 
-    player db ?         ; luu nguoi choi hien tai ('x' hoac 'o')
+    player db ?         
     
     welcomeMsg db 'Chao mung den voi Tic Tac Toe! $'
     inputMsg db 'Nhap vi tri, luot cua nguoi choi: $'
     draw db 'Hoa nhau! $'
     won db 'Nguoi choi chien thang: $'
+    playAgainMsg db 13,10,'Ban co muon choi lai? (y/n): $'
+    
+    ; Cac ky tu ve bang luoi
+    topRow    db 201, 205, 205, 205, 203, 205, 205, 205, 203, 205, 205, 205, 187, '$'
+    middleRow db 204, 205, 205, 205, 206, 205, 205, 205, 206, 205, 205, 205, 185, '$'
+    bottomRow db 200, 205, 205, 205, 202, 205, 205, 205, 202, 205, 205, 205, 188, '$'
+    vertBar   db 186, '$'
 
 .CODE
 main:
 
     mov cx, 9           ; choi toi da 9 luot (9 o tren ban co)
-    
-x:  call clearScreen    ; xoa man hinh de lam moi
+
+x:  call clearScreen    
     call printWelcomeMsg
-    call printGrid      ; hien thi ban co
+    call printGrid      
 
     mov bx, cx
-    and bx, 1           ; bx = cx & 1 de kiem tra chan/le
+    and bx, 1           
     cmp bx, 0
-    je isEven           ; neu chan thi luot cua 'o'
-    mov player, 'x'     ; neu le thi luot cua 'x'
+    je isEven           
+    mov player, 'X'     
     jmp endif
 
 isEven:
-    mov player, 'o'
+    mov player, 'O'     
 
 endif:
 notValid:
     call printNewLine
-    call printInputMsg  ; thong bao luot choi va nhap vi tri
-    call readInput      ; doc phim, ket qua nam trong AL (ky tu '1' den '9')
+    call printInputMsg  
+    call readInput      
 
-    push cx             ; luu cx vi sap dung vong lap
+    push cx             
     mov cx, 9
-    mov bx, 0           ; bx = chi so de duyet mang grid
+    mov bx, 0           
 
-y:  cmp grid[bx], al    ; kiem tra vi tri da duoc chon chua
-    je update           ; neu dung thi cap nhat o do
-    jmp continue
+y:
+    cmp grid[bx], al
+    je update
+    inc bx
+    loop y
+    pop cx
+    jmp notValid        ; neu khong co o nao khop, nhap lai
 
 update:
-    mov dl, player      ; luu gia tri nguoi choi vao DL
-    mov grid[bx], dl    ; gan vao o tren ban co
-
-continue:
-    inc bx
-    loop y              ; lap den het 9 o
-
+    mov dl, player      
+    mov grid[bx], dl    
     pop cx
-    call checkwin       ; kiem tra dieu kien thang
-loop x
 
-    call printDraw      ; neu het 9 luot ma chua ai thang thi hoa
+    call checkwin       
+    loop x
+
+    call printDraw      
+    call askReplay
 
 programEnd:
     mov ah, 0
-    int 16h             ; doi nguoi dung nhan phim bat ky
-    ret                 ; ket thuc chuong trinh
+    int 16h             
+    ret                 
 
 ; ====================
 ; CAC HAM HO TRO
@@ -73,75 +80,143 @@ programEnd:
 
 printGrid:
     push cx
-    mov bx, 0
-    mov cx, 3           ; 3 hang
-
-x1:
+    
+    ; In dong tieu de tren cung
+    lea dx, topRow
+    call printString
     call printNewLine
-    push cx
-    mov cx, 3           ; 3 cot
-
-x2:
-    mov dl, grid[bx]    ; lay ky tu tu o hien tai
-    mov ah, 2h
-    int 21h             ; in ky tu
-
-    call printSpace     ; in dau cach
-    inc bx
-    loop x2
-    pop cx
-    loop x1
+    
+    ; In hang dau tien
+    call printVertBar
+    call printSpace
+    mov dl, grid[0]    
+    call printColorChar
+    call printSpace
+    
+    call printVertBar
+    call printSpace
+    mov dl, grid[1]    
+    call printColorChar
+    call printSpace
+    
+    call printVertBar
+    call printSpace
+    mov dl, grid[2]    
+    call printColorChar
+    call printSpace
+    
+    call printVertBar
+    call printNewLine
+    
+    ; In hang ngang giua
+    lea dx, middleRow
+    call printString
+    call printNewLine
+    
+    ; In hang thu hai
+    call printVertBar
+    call printSpace
+    mov dl, grid[3]    
+    call printColorChar
+    call printSpace
+    
+    call printVertBar
+    call printSpace
+    mov dl, grid[4]    
+    call printColorChar
+    call printSpace
+    
+    call printVertBar
+    call printSpace
+    mov dl, grid[5]    
+    call printColorChar
+    call printSpace
+    
+    call printVertBar
+    call printNewLine
+    
+    ; In hang ngang giua
+    lea dx, middleRow
+    call printString
+    call printNewLine
+    
+    ; In hang thu ba
+    call printVertBar
+    call printSpace
+    mov dl, grid[6]    
+    call printColorChar
+    call printSpace
+    
+    call printVertBar
+    call printSpace
+    mov dl, grid[7]    
+    call printColorChar
+    call printSpace
+    
+    call printVertBar
+    call printSpace
+    mov dl, grid[8]    
+    call printColorChar
+    call printSpace
+    
+    call printVertBar
+    call printNewLine
+    
+    ; In dong cuoi cung
+    lea dx, bottomRow
+    call printString
+    
     pop cx
     call printNewLine
     ret
 
-printNewLine:
-    mov dl, 0ah         ; xuong dong
+printVertBar:
+    lea dx, vertBar
+    call printString
+    ret
+
+printColorChar:
+    ; Don gian chi in ky tu ma khong co mau
     mov ah, 2
     int 21h
-    mov dl, 13          ; quay dau dong
+    ret
+
+printString:
+    mov ah, 9
+    int 21h
+    ret
+
+printNewLine:
+    mov dl, 0ah         
+    mov ah, 2
+    int 21h
+    mov dl, 13          
     mov ah, 2
     int 21h
     ret
 
 printSpace:
-    mov dl, 32          ; ky tu dau cach
+    mov dl, 32          
     mov ah, 2
     int 21h
     ret
 
 readInput:
     mov ah, 1
-    int 21h             ; nhap 1 ky tu vao AL
+    int 21h             
 
-    ; kiem tra co hop le khong (1-9)
+    ; kiem tra ky tu co tu 1 den 9 khong
     cmp al, '1'
-    je valid
-    cmp al, '2'
-    je valid
-    cmp al, '3'
-    je valid
-    cmp al, '4'
-    je valid
-    cmp al, '5'
-    je valid
-    cmp al, '6'
-    je valid
-    cmp al, '7'
-    je valid
-    cmp al, '8'
-    je valid
+    jb notValid
     cmp al, '9'
-    je valid
-    jmp notValid
-
-valid:
+    ja notValid
     ret
 
 printWelcomeMsg:
     lea dx, welcomeMsg
     mov ah, 9
     int 21h
+    call printNewLine
     ret
 
 printDraw:
@@ -160,7 +235,7 @@ printWon:
     mov dl, player
     mov ah, 2
     int 21h
-    jmp programEnd
+    call askReplay
     ret
 
 printInputMsg:
@@ -242,8 +317,37 @@ skip8:
     ret
 
 clearScreen:
-    mov ax, 3           ; goi ngat 10h de xoa man hinh
+    mov ax, 3           
     int 10h
     ret
+
+askReplay:
+    call printNewLine
+    lea dx, playAgainMsg
+    mov ah, 9
+    int 21h
+
+    mov ah, 1
+    int 21h         ; nhap y hoac n
+    cmp al, 'y'
+    je resetGame
+    cmp al, 'Y'
+    je resetGame
+    ret
+
+resetGame:
+    ; dat lai ban co nhu ban dau
+    mov grid[0], '1'
+    mov grid[1], '2'
+    mov grid[2], '3'
+    mov grid[3], '4'
+    mov grid[4], '5'
+    mov grid[5], '6'
+    mov grid[6], '7'
+    mov grid[7], '8'
+    mov grid[8], '9'
+
+    mov cx, 9
+    jmp x
 
 end main

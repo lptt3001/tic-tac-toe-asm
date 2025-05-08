@@ -70,9 +70,9 @@ update:
     call askReplay
 
 programEnd:
-    mov ah, 0
-    int 16h             
-    ret                 
+    mov ah, 4Ch        ; Chuc nang ket thuc chuong trinh
+    int 21h            ; Tro ve DOS
+    ret                
 
 ; ====================
 ; CAC HAM HO TRO
@@ -333,6 +333,10 @@ askReplay:
     je resetGame
     cmp al, 'Y'
     je resetGame
+    
+    ; Neu khong muon choi lai thi ket thuc chuong trinh
+    mov ah, 4Ch
+    int 21h         ; Ket thuc chuong trinh
     ret
 
 resetGame:
